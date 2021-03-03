@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.teal-blue.min.css" />    
+    <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <style>
+        :root {
+            --grey: rgb(5, 3, 106);
+            --lightblue: rgb(3, 169, 244)
+        }
+        html {
+            height: 100%;
+        }
+        body {
+            margin-top: 0px;
+            background: rgb(139,0,255);
+            background: linear-gradient(145deg, rgba(139,0,255,1) 0%, rgb(133, 93, 226) 39%, rgba(69,110,238,1) 68%, rgba(0,157,196,1) 100%);
+            height: 100%;
+        }
+        #main {
+            border-right: 5px solid rgba(7, 26, 87, 0.1);
+            margin-top: 0;
+            display: inline-block;
+            height: 100%;
+            width: 23%;
+            text-align: center;
+        }
+        #graph {
+            margin-top: 0px;
+            position:relative;
+            width: 75%;
+            height: 100%;
+            float: right;
+            border-radius: 0 0 0 75px;
+        }
+        #chart {
+            backdrop-filter: blur(2px);
+        }
+        h2 {
+            margin-top: 0px;
+            margin-bottom: 0px;
+            /*text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;*/
+            font-family: "Helvetica","Arial",sans-serif;
+        }
+        #particles-js {
+            filter: blur(0.2px);
+            height: 100%;
+            width: 75%;
+            position: absolute;
+            display: block;
+            top: 0;
+            right: 0;
+            z-index: -1;
+        }
+        h4 {
+            margin-bottom: 0px;
+            margin-top: 0px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main">
+        <h2 id="counter" style="color: rgba(0,0,0,.22); display: inline-block; margin-top: 10px;" class="display-2">Réussites</h2>
+        <br>
+        <h2 id="counterBis" style="color: rgba(0,0,0,.22); display: inline-block;" class="display-2">Échecs</h2>
+        <br>
+        <h2 id="percentage" style="color: rgba(0,0,0,.22); display: inline-block;" class="display-2">Pourcentage de réussite</h2>
+        <div class="mdl-textfield mdl-js-textfield">
+            <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="sample2">
+            <label class="mdl-textfield__label" for="sample2">Nombres d'essais</label>
+            <span class="mdl-textfield__error">L'input n'est pas un nombre !</span>
+        </div>
+        <div class="mdl-textfield mdl-js-textfield" style="margin-top: 0px;">
+            <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="delayTime">
+            <label class="mdl-textfield__label" for="delayTime">Temps entre les itérations (en ms)</label>
+            <span class="mdl-textfield__error">L'input n'est pas un nombre !</span>
+        </div>
+        <br>
+        <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-1" style="width: 50%; margin-bottom: 5px;">
+            <input type="checkbox" style="margin-left: 200px;" id="checkbox-1" class="mdl-checkbox__input" id="showGraph" checked onclick="checkBoxState = !checkBoxState; console.log(checkBoxState)">
+            <span class="mdl-checkbox__label" style="color: rgba(0,0,0,.5)">Montrer la courbe ?</span>
+        </label>
+        <br>
+        <button style="color: rgba(0,0,0,.5)" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="launchMain($('#sample2').val(), checkBoxState, document.getElementById('delayTime').value)">
+            Lancer
+        </button>
+        <button style="color: rgba(0,0,0,.5)" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="window.clearInterval(intervalId)">
+            Stopper
+        </button>
+        <br>
+        <h4 id="averageEcart" style="color: rgba(0,0,0,.22); display: inline-block; margin-top: 10px;" class="display-2">Écart moyen avec le bus : </h4>
+    </div>
+    <div id="graph">
+        <canvas id="chart" style="max-width: 60%; margin: auto"></canvas>
+    </div>
+    <div id="particles-js"></div>
+</body>
+<script>
+    var checkBoxState = true
+    var myLineChart
+    var counter = 0
+    var counterBis = 0
+    var intervalId
+    var totalIterations = 0
+    var sum = 0
+    var avg = 0
+    function launchNew(isNew, show) {
+        totalIterations++
+        var data = [0]
+        var labels = []
+        for (var k = 0; k <= 20; k++) {
+            var i = Math.round(Math.random())
+            if (i == 0) {
+                data.push(data[k] - 1)
+            } else {
+                data.push(data[k] + 1)
+            }
+            labels.push(k)
+        }
+        if (data[20] == 0) {
+            var bckgrnd = "#35b58e"
+            counter++
+        } else {
+            var bckgrnd = "#c94864"
+            counterBis++
+        }
+        $("#counter").text("Réussites : " + counter)
+        $("#counterBis").text("Échecs : " + counterBis)
+        $("#percentage").text("Pourcentage de réussite : \n" + Math.round(counter/(counterBis + counter) * 100000)/1000 + " %")
+        if (isNew && show) {
+            var speedData = {
+            labels: labels,
+            datasets: [{
+                backgroundColor: bckgrnd,
+                borderColor: bckgrnd,
+                fill: false,
+                label: "Chemin pris par l'homme",
+                data: data,
+            }]
+            };
+            var ctx = document.getElementById('chart').getContext('2d');
+            myLineChart = new Chart(ctx, {
+                type: 'line',
+                data: speedData,
+                options: chartOptions
+            });
+        } if (!isNew && show) {
+            myLineChart.data.datasets[0].backgroundColor = bckgrnd
+            myLineChart.data.datasets[0].borderColor = bckgrnd
+            myLineChart.data.datasets[0].data = data
+            myLineChart.update()
+        }
+        sum += Math.abs(data[20])
+        var avg = sum/totalIterations
+        console.log(avg, sum)
+        console.log((counter/(counterBis + counter)) * 100, avg, sum)
+        $("#averageEcart").text("Écart moyen avec le bus : \n" + Math.round(avg*1000)/1000)
+        if ($("#sample2").val() != undefined && $("#sample2").val() > 0) {
+            $("#sample2").val($("#sample2").val() - 1)
+        }
+    }
+    
+
+    function launchMain(iterations, show, delay) {
+        var i = 0
+        intervalId = window.setInterval(function() {
+            i++
+            if (i >= iterations - 1) {
+                window.clearInterval(intervalId)
+            }
+            launchNew(false, show)
+        }, delay);
+    }
+
+    var chartOptions = {
+        animation: {
+            duration: 0
+        },
+        aspectRatio: 1,
+        elements: {
+            line: {
+                tension: 0
+            }
+        },
+        legend: {
+            display: true,
+            position: 'top',
+            labels: {
+                    boxWidth: 80,
+                    fontColor: 'black'
+                }
+            },
+            scales: {
+                yAxes: [{
+                    display: true,
+                    ticks: {
+                        fontColor: "black",
+                        suggestedMin: -20,
+                        suggestedMax: 20,
+                        stepSize: 1,
+                    }
+                }],
+                xAxes: [{
+                    display:true,
+                    ticks: {
+                        fontColor: "black",
+                        beginAtZero: true,
+                        suggestedMax: 20,
+                        stepSize: 1,
+                        stepWidth: 1,
+                    }
+                }]
+        }
+    };
+    launchNew(true, true)
+</script>
+<script src="js/particles.js"></script>
+<script src="js/particles.min.js"></script>
+<script src="js/app.js"></script>
+
+</html>
