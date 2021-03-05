@@ -12,11 +12,6 @@
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.teal-blue.min.css" />    
     <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
     <style>
-        :root {
-            --grey: rgb(5, 3, 106);
-            --lightblue: rgb(3, 169, 244)
-        }
-
         html {
             height: 100%;
         }
@@ -26,8 +21,8 @@
             background: rgb(139,0,255);
             background: linear-gradient(145deg, rgba(139,0,255,1) 0%, rgb(133, 93, 226) 39%, rgba(69,110,238,1) 68%, rgba(0,157,196,1) 100%);
             height: 100%;
+            /*J'utilise overflow:hidden pour éviter qu'il y ait une scrollbar*/
             overflow: hidden;
-
         }
 
         #main {
@@ -60,7 +55,6 @@
         h2 {
             margin-top: 0px;
             margin-bottom: 0px;
-            /*text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;*/
             font-family: "Helvetica","Arial",sans-serif;
         }
 
@@ -125,6 +119,7 @@
         </div>
         <br>
         <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="checkbox-1" style="width: 50%; margin-bottom: 5px;">
+            <!--On ne peux pas lire la checkbox car elle n'existe pas réellement dans le DOM, j'utilise donc une variable globable pour garder la trace de l'état-->
             <input type="checkbox" style="margin-left: 200px;" id="checkbox-1" class="mdl-checkbox__input" id="showGraph" checked onclick="checkBoxState = !checkBoxState; console.log(checkBoxState)">
             <span class="mdl-checkbox__label" style="color: rgba(0,0,0,.5)">Montrer la courbe ?</span>
         </label>
@@ -146,12 +141,22 @@
         <p id="codeText" style="white-space: pre-wrap; color: rgb(138, 138, 138)"></p>
     </div>
     <div id="questions">
-        <h3 style="color: rgba(0,0,0,.72)">Exercice 1</h3>
-        <h4 style="color: rgba(0,0,0,.72)">1) Cette marche aléatoire est simulée grâce à une génération de nombre "aléatoire" qui permet de choisir entre un pas à gauche ou un pas à droite.</h4>
+        <div style="width: 50%; text-align: left; margin: auto;">
+            <h4 style="color: rgba(0,0,0,.72)">
+                1) Cette marche aléatoire est simulée grâce à une génération de nombre "aléatoire" qui permet de choisir entre un pas à gauche ou un pas à droite.
+                <br>La variable P, <span style="color: rgba(50,50,50,.72)">(appelée i dans mon code)</span> peut avoir la valeur 0 ou 1. 
+                <br><br>2) La variable D compte le nombre de pas vers la droite (ou gauche, au choix). Elle peut prendre une valeur de 0 à 20.
+                <br><br>3) a) Cela veut dire que l'ivrone a marché 10 pas vers la droite sur 20, donc qu'il en a fait autant vers la droite que vers la gauche
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;b) On peut rajouter l'instruction <span style="color: rgba(0, 0, 0, 1);"> if 20%D == 0 : print("Atteint")</span>
+                <br>&nbsp;&nbsp;&nbsp;&nbsp;c) C'est environ 50/50.
+                <br><br>4) Voir le code
+            </h4>
+        </div>
     </div>
     <div id="particles-js"></div>
 </body>
 <script>
+    //Liste de variables globales
     var checkBoxState = true
     var myLineChart
     var counter = 0
@@ -160,23 +165,26 @@
     var totalIterations = 0
     var sum = 0
     var avg = 0
+
     function launchNew(isNew, show) {
         totalIterations++
         var data = [0]
         var labels = []
+
         //Boucle principale
         for (var k = 0; k <= 20; k++) {
             var i = Math.round(Math.random())
             if (i == 0) {
-                //Retire 1 à la dernière valeur
+                //Retire 1 à la dernière valeur de l'array
                 data.push(data[k] - 1)
             } else {
-                //Ajoute 1 à la dernière valeur
+                //Ajoute 1 à la dernière valeur de l'array
                 data.push(data[k] + 1)
             }
             labels.push(k)
         }
-        //Au lieu de voir si il y a autant de pas vers la droite que vers la gauche, on regarde juste si le dernier pas au bon endroit
+
+        //Au lieu de voir si il y a autant de pas vers la droite que vers la gauche, on regarde juste si le dernier pas est au bon endroit
         if (data[20] == 0) {
             var bckgrnd = "#35b58e"
             counter++
@@ -184,9 +192,15 @@
             var bckgrnd = "#c94864"
             counterBis++
         }
+
+        //Update les différents compteurs
         $("#counter").text("Réussites : " + counter)
         $("#counterBis").text("Échecs : " + counterBis)
+
+        //En JS, on ne peux pas choisir le nombre de chiffres après la virgule, donc on doit utiliser cette méthode Math.round(x * 1000)/1000
         $("#percentage").text("Pourcentage de réussite : \n" + Math.round(counter/(counterBis + counter) * 100000)/1000 + " %")
+
+        //La variable isNew définit si le graphique existe
         if (isNew && show) {
             var speedData = {
             labels: labels,
@@ -205,6 +219,7 @@
                 options: chartOptions
             });
         } if (!isNew && show) {
+            //Au lieu de redessiner le graphique à chaque fois, on met seulement à jour les points.
             myLineChart.data.datasets[0].backgroundColor = bckgrnd
             myLineChart.data.datasets[0].borderColor = bckgrnd
             myLineChart.data.datasets[0].data = data
@@ -215,6 +230,8 @@
         console.log(avg, sum)
         console.log((counter/(counterBis + counter)) * 100, avg, sum)
         $("#averageEcart").text("Écart moyen avec le bus : \n" + Math.round(avg*1000)/1000)
+
+        //On réduit de 1 l'input du nombre d'itérations
         if ($("#sample2").val() != undefined && $("#sample2").val() > 0) {
             $("#sample2").val($("#sample2").val() - 1)
         }
@@ -232,6 +249,7 @@
         }, delay);
     }
 
+//---------------Options du graphique---------------
     var chartOptions = {
         animation: {
             duration: 0
@@ -272,7 +290,11 @@
                 }]
         }
     };
+
+    //Initialise la première itération
     launchNew(true, true)
+
+//--------------------Affichage du code-----------------------
     var code = launchNew
     var codeSplitted = code.toString().split("\n")
     for (line in codeSplitted) {
@@ -280,9 +302,7 @@
             var lineSplitted = codeSplitted[line].split("//")
             code = code.toString().replace("//" + lineSplitted[1], "<span style='color: green'>//" + lineSplitted[1] + "</span>")
         }
-    }
-    console.log(code)
-    
+    }    
     document.getElementById("codeText").innerHTML = code
 </script>
 <script src="js/particles.js"></script>
