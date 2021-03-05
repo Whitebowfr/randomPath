@@ -16,15 +16,20 @@
             --grey: rgb(5, 3, 106);
             --lightblue: rgb(3, 169, 244)
         }
+
         html {
             height: 100%;
         }
+
         body {
             margin-top: 0px;
             background: rgb(139,0,255);
             background: linear-gradient(145deg, rgba(139,0,255,1) 0%, rgb(133, 93, 226) 39%, rgba(69,110,238,1) 68%, rgba(0,157,196,1) 100%);
             height: 100%;
+            overflow: hidden;
+
         }
+
         #main {
             border-right: 5px solid rgba(7, 26, 87, 0.1);
             margin-top: 0;
@@ -33,7 +38,8 @@
             width: 23%;
             text-align: center;
         }
-        #graph {
+
+        .secondMenu {
             margin-top: 0px;
             position:relative;
             width: 75%;
@@ -41,15 +47,23 @@
             float: right;
             border-radius: 0 0 0 75px;
         }
+
+        #code {
+            background-color: rgb(67, 67, 67);
+            border-radius: 0 0 0 0;
+        }
+
         #chart {
             backdrop-filter: blur(2px);
         }
+
         h2 {
             margin-top: 0px;
             margin-bottom: 0px;
             /*text-shadow: 1px 0 0 #000, -1px 0 0 #000, 0 1px 0 #000, 0 -1px 0 #000, 1px 1px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;*/
             font-family: "Helvetica","Arial",sans-serif;
         }
+
         #particles-js {
             filter: blur(0.2px);
             height: 100%;
@@ -60,20 +74,45 @@
             right: 0;
             z-index: -1;
         }
+
+        h3 {
+            margin-bottom: 1px;
+            margin-top: 1px;
+        }
+
         h4 {
             margin-bottom: 0px;
             margin-top: 0px;
+            color: rgba(0,0,0,.32)
+        }
+
+        #questions {
+            text-align: center;
+            backdrop-filter: blur(2px);
+            width: 100%;
+            height: 100%;
+            display: none;
         }
     </style>
 </head>
 
 <body>
+    <div id="navbar" style="text-align: left;">
+        <button id="demo-menu-lower-left" class="mdl-button mdl-js-button mdl-button--icon" style="margin-left: 0px;">
+            <i class="material-icons">more_vert</i>
+        </button>
+        <ul class="mdl-menu mdl-menu--bottom-left mdl-js-menu mdl-js-ripple-effect" for="demo-menu-lower-left">
+            <li class="mdl-menu__item" onclick="$('#main').show('fast'); $('#graph').show('fast'); $('#code').hide('fast'); $('#particles-js').css('width', '75%'); $('#questions').hide('fast')">Chemin aléatoire</li>
+            <li class="mdl-menu__item mdl-menu__item--full-bleed-divider" onclick="$('#main').show('fast'); $('#graph').hide('fast'); $('#code').show('fast'); $('#particles-js').css('width', '75%'); $('#questions').hide('fast')">Code du chemin aléatoire</li>
+            <li class="mdl-menu__item" onclick="$('#main').hide('fast'); $('#code').hide('fast'); $('#graph').hide('fast'); $('#questions').show('fast'); $('#particles-js').css('width', '100%')">Autres questions</li>
+        </ul>
+    </div>
     <div id="main">
-        <h2 id="counter" style="color: rgba(0,0,0,.22); display: inline-block; margin-top: 10px;" class="display-2">Réussites</h2>
+        <h2 id="counter" style="color: rgba(0,0,0,.32); display: inline-block; margin-top: 10px;" class="display-2">Réussites</h2>
         <br>
-        <h2 id="counterBis" style="color: rgba(0,0,0,.22); display: inline-block;" class="display-2">Échecs</h2>
+        <h2 id="counterBis" style="color: rgba(0,0,0,.32); display: inline-block;" class="display-2">Échecs</h2>
         <br>
-        <h2 id="percentage" style="color: rgba(0,0,0,.22); display: inline-block;" class="display-2">Pourcentage de réussite</h2>
+        <h2 id="percentage" style="color: rgba(0,0,0,.32); display: inline-block;" class="display-2">Pourcentage de réussite</h2>
         <div class="mdl-textfield mdl-js-textfield">
             <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="sample2">
             <label class="mdl-textfield__label" for="sample2">Nombres d'essais</label>
@@ -97,10 +136,18 @@
             Stopper
         </button>
         <br>
-        <h4 id="averageEcart" style="color: rgba(0,0,0,.22); display: inline-block; margin-top: 10px;" class="display-2">Écart moyen avec le bus : </h4>
+        <h4 id="averageEcart" style="display: inline-block; margin-top: 10px;" class="display-2">Écart moyen avec le bus : </h4>
+        <br>
     </div>
-    <div id="graph">
+    <div id="graph" class="secondMenu" style="display: block;">
         <canvas id="chart" style="max-width: 60%; margin: auto"></canvas>
+    </div>
+    <div id="code" class="secondMenu" style="overflow: auto; display: none;">
+        <p id="codeText" style="white-space: pre-wrap; color: rgb(138, 138, 138)"></p>
+    </div>
+    <div id="questions">
+        <h3 style="color: rgba(0,0,0,.72)">Exercice 1</h3>
+        <h4 style="color: rgba(0,0,0,.72)">1) Cette marche aléatoire est simulée grâce à une génération de nombre "aléatoire" qui permet de choisir entre un pas à gauche ou un pas à droite.</h4>
     </div>
     <div id="particles-js"></div>
 </body>
@@ -117,15 +164,19 @@
         totalIterations++
         var data = [0]
         var labels = []
+        //Boucle principale
         for (var k = 0; k <= 20; k++) {
             var i = Math.round(Math.random())
             if (i == 0) {
+                //Retire 1 à la dernière valeur
                 data.push(data[k] - 1)
             } else {
+                //Ajoute 1 à la dernière valeur
                 data.push(data[k] + 1)
             }
             labels.push(k)
         }
+        //Au lieu de voir si il y a autant de pas vers la droite que vers la gauche, on regarde juste si le dernier pas au bon endroit
         if (data[20] == 0) {
             var bckgrnd = "#35b58e"
             counter++
@@ -222,6 +273,17 @@
         }
     };
     launchNew(true, true)
+    var code = launchNew
+    var codeSplitted = code.toString().split("\n")
+    for (line in codeSplitted) {
+        if (codeSplitted[line].includes("//")) {
+            var lineSplitted = codeSplitted[line].split("//")
+            code = code.toString().replace("//" + lineSplitted[1], "<span style='color: green'>//" + lineSplitted[1] + "</span>")
+        }
+    }
+    console.log(code)
+    
+    document.getElementById("codeText").innerHTML = code
 </script>
 <script src="js/particles.js"></script>
 <script src="js/particles.min.js"></script>
