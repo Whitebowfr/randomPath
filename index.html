@@ -108,12 +108,12 @@
         <br>
         <h2 id="percentage" style="color: rgba(0,0,0,.32); display: inline-block;" class="display-2">Pourcentage de réussite</h2>
         <div class="mdl-textfield mdl-js-textfield">
-            <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="sample2">
+            <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="sample2" autocomplete="off">
             <label class="mdl-textfield__label" for="sample2">Nombres d'essais</label>
             <span class="mdl-textfield__error">L'input n'est pas un nombre !</span>
         </div>
         <div class="mdl-textfield mdl-js-textfield" style="margin-top: 0px;">
-            <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="delayTime">
+            <input class="mdl-textfield__input" type="text" pattern="-?[0-9]*(\.[0-9]+)?" id="delayTime" autocomplete="off">
             <label class="mdl-textfield__label" for="delayTime">Temps entre les itérations (en ms)</label>
             <span class="mdl-textfield__error">L'input n'est pas un nombre !</span>
         </div>
@@ -127,7 +127,7 @@
         <button style="color: rgba(0,0,0,.5)" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="launchMain($('#sample2').val(), checkBoxState, document.getElementById('delayTime').value)">
             Lancer
         </button>
-        <button style="color: rgba(0,0,0,.5)" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="window.clearInterval(intervalId)">
+        <button style="color: rgba(0,0,0,.5)" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" onclick="window.clearInterval(intervalId); isInLoop = false">
             Stopper
         </button>
         <br>
@@ -165,6 +165,7 @@
     var totalIterations = 0
     var sum = 0
     var avg = 0
+    var isInLoop = false
 
     function launchNew(isNew, show) {
         totalIterations++
@@ -198,7 +199,7 @@
         $("#counterBis").text("Échecs : " + counterBis)
 
         //En JS, on ne peux pas choisir le nombre de chiffres après la virgule, donc on doit utiliser cette méthode Math.round(x * 1000)/1000
-        $("#percentage").text("Pourcentage de réussite : \n" + Math.round(counter/(counterBis + counter) * 100000)/1000 + " %")
+        $("#percentage").html("Pourcentage de réussite : <br>" + Math.round(counter/(counterBis + counter) * 100000)/1000 + " %")
 
         //La variable isNew définit si le graphique existe
         if (isNew && show) {
@@ -227,8 +228,8 @@
         }
         sum += Math.abs(data[20])
         var avg = sum/totalIterations
-        console.log(avg, sum)
-        console.log((counter/(counterBis + counter)) * 100, avg, sum)
+        //console.log(avg, sum)
+        //console.log((counter/(counterBis + counter)) * 100, avg, sum)
         $("#averageEcart").text("Écart moyen avec le bus : \n" + Math.round(avg*1000)/1000)
 
         //On réduit de 1 l'input du nombre d'itérations
@@ -240,9 +241,15 @@
 
     function launchMain(iterations, show, delay) {
         var i = 0
+        console.log(isInLoop)
+        if (isInLoop) {
+            return false
+        }
+        isInLoop = true
         intervalId = window.setInterval(function() {
             i++
             if (i >= iterations - 1) {
+                isInLoop = false
                 window.clearInterval(intervalId)
             }
             launchNew(false, show)
